@@ -197,6 +197,11 @@
   #zonderCode .btn{width:100%;padding:14px}
   .koppelUitleg{margin-top:12px;color:var(--muted);font-size:14px;font-weight:600}
   .koppelUitleg.fout{color:#fca5a5}
+  /* alleen voor de leerkracht */
+  body:not(.leerkracht) .alleenLeerkracht{display:none !important}
+  body.leerkracht #slotBtn{background:rgba(34,224,122,.18)}
+  #slotPaneel .kaart{width:min(380px,100%)}
+  #slotPaneel .veld input{text-align:center;font-size:28px;letter-spacing:10px}
   /* status van het koppelen */
   .koppelStatus{display:inline-flex;align-items:center;gap:7px;height:32px;padding:0 12px;border-radius:999px;background:#0a101c;border:1px solid var(--rand);
     color:var(--muted);font-weight:700;font-size:13px;white-space:nowrap;flex:none}
@@ -245,7 +250,8 @@
     <div class="groep">
       <button class="ico" id="geluidBtn" type="button" title="Geluid aan/uit">🔊</button>
       <button class="ico" id="groterBtn" type="button" title="Beeldvullend voor het digibord">⛶</button>
-      <button class="ico" id="instBtn" type="button" title="Instellingen">⚙️</button>
+      <button class="ico alleenLeerkracht" id="instBtn" type="button" title="Instellingen">⚙️</button>
+      <button class="ico" id="slotBtn" type="button" title="Leerkracht: ontgrendelen">🔒</button>
     </div>
   </header>
 
@@ -261,17 +267,28 @@
       </section>
       <section class="sectie invoerKaart">
         <div class="label">Doe mee!</div>
-        <p class="uitnodiging">Vul in hoeveel je hebt opgehaald en druk op Erbij. Moet er geld uit de pot? Druk dan op Eruit.</p>
+        <p class="uitnodiging">Vul in hoeveel je hebt opgehaald en druk op Erbij.<span class="alleenLeerkracht"> Moet er geld uit de pot? Druk dan op Eruit.</span></p>
         <form id="form" autocomplete="off">
           <label class="inp"><span>€</span><input id="bedrag" inputmode="decimal" placeholder="0,00" aria-label="Bedrag"></label>
           <button class="btn" type="submit" data-actie="erin" id="erbijBtn">Erbij ➜</button>
-          <button class="btn eruit" type="submit" data-actie="eruit" id="eruitBtn" title="Haal dit bedrag uit de pot">Eruit</button>
+          <button class="btn eruit alleenLeerkracht" type="submit" data-actie="eruit" id="eruitBtn" title="Haal dit bedrag uit de pot">Eruit</button>
         </form>
         <div class="fout" id="fout"></div>
         <div class="laatste" id="laatste"></div>
       </section>
     </div>
   </main>
+</div>
+
+<div class="paneel hidden" id="slotPaneel">
+  <form class="kaart" id="slotForm" autocomplete="off">
+    <h2 id="slotTitel">Leerkracht</h2>
+    <p class="uitleg" id="slotUitleg"></p>
+    <div class="veld"><input id="pinIn" type="password" inputmode="numeric" maxlength="8" placeholder="Pincode" aria-label="Pincode"></div>
+    <div class="veld" id="pin2Veld"><input id="pin2In" type="password" inputmode="numeric" maxlength="8" placeholder="Nog een keer" aria-label="Pincode herhalen"></div>
+    <div class="fout" id="slotFout"></div>
+    <div class="knoppen"><button class="btn licht" type="button" id="slotAnnuleer">Annuleren</button><button class="btn" type="submit" id="slotOk">Ontgrendelen</button></div>
+  </form>
 </div>
 
 <div class="paneel hidden" id="meedoen">
@@ -284,6 +301,10 @@
       <div class="ofLink">of ga naar <b id="mLink"></b></div>
       <div class="codeVak"><span>Klascode</span><b id="mCode"></b></div>
       <div class="koppelUitleg" id="koppelUitleg"></div>
+    </div>
+    <div id="geenCodeLeerling" class="hidden">
+      <h2 class="meedoenTitel">Koppelen staat nog uit</h2>
+      <p class="uitleg" style="text-align:center">Vraag je juf of meester om het koppelen met de iPads aan te zetten.</p>
     </div>
     <div id="zonderCode" class="hidden">
       <h2 class="meedoenTitel">Bedenk een klascode</h2>
@@ -318,6 +339,7 @@
   <form class="kaart" id="instForm">
     <h2>Instellingen</h2>
     <div class="veld"><label for="doelNaam">Waarvoor sparen we?</label><input id="doelNaam" maxlength="40"></div>
+    <div class="veld"><label for="nieuwePin">Nieuwe pincode voor de leerkracht (leeg = niet wijzigen)</label><input id="nieuwePin" type="password" inputmode="numeric" maxlength="8" autocomplete="new-password"></div>
     <div class="veld"><label for="codeIn">Klascode om iPads te koppelen (leeg = uit)</label><input id="codeIn" maxlength="12" placeholder="bijv. VOS8471" autocomplete="off" style="text-transform:uppercase"></div>
     <div class="knoppen">
       <button class="btn rood" type="button" id="nulBtn">Pot op nul zetten</button>
@@ -2958,8 +2980,8 @@ function teken(){
   const laatste = document.getElementById('laatste');
   if(stortingen.length){
     const l = stortingen[stortingen.length-1];
-    laatste.innerHTML = `Laatst: ${l < 0 ? '−' : '+'} ${fmt(Math.abs(l))} · <button type="button" id="terug">ongedaan maken</button>`;
-    document.getElementById('terug').onclick = () => { stortingen.pop(); bewaar(); teken(); toast('De laatste wijziging is teruggedraaid'); };
+    laatste.innerHTML = `Laatst: ${l < 0 ? '−' : '+'} ${fmt(Math.abs(l))}` + (isLeerkracht() ? ` · <button type="button" id="terug">ongedaan maken</button>` : '');
+    if(isLeerkracht()) document.getElementById('terug').onclick = () => { stortingen.pop(); bewaar(); teken(); toast('De laatste wijziging is teruggedraaid'); };
   } else laatste.textContent = 'Typ een bedrag en druk op Erbij.';
 }
 
@@ -3035,6 +3057,7 @@ function plusTekst(c, min){
 form.addEventListener('submit', e => {
   e.preventDefault();
   const erin = !(e.submitter && e.submitter.dataset.actie === 'eruit');
+  if(!erin && !isLeerkracht()){ toast('Alleen de leerkracht kan geld uit de pot halen'); return; }
   const c = parse(bedragEl.value);
   if(c === null){ fout.textContent = 'Vul eerst een bedrag in.'; bedragEl.focus(); return; }
   if(isNaN(c)){ fout.textContent = 'Dat is geen geldig bedrag. Typ bijvoorbeeld 12,50'; return; }
@@ -3069,7 +3092,8 @@ const isLeerling = new URLSearchParams(location.search).has('leerling');
 function tekenMeedoen(){
   const heeft = meedoen.code.length >= 4;
   document.getElementById('metCode').classList.toggle('hidden', !heeft);
-  document.getElementById('zonderCode').classList.toggle('hidden', heeft);
+  document.getElementById('zonderCode').classList.toggle('hidden', heeft || !isLeerkracht());
+  document.getElementById('geenCodeLeerling').classList.toggle('hidden', heeft || isLeerkracht());
   if(!heeft){ document.getElementById('codeSnel').value = meedoen.code; return; }
   const url = SITE + '?leerling&code=' + encodeURIComponent(meedoen.code);
   const qr = qrcode(0, 'M'); qr.addData(url); qr.make();
@@ -3095,7 +3119,7 @@ document.getElementById('bewaarSnel').onclick = () => {
   if(!schoneCode(c)){ toast('Bedenk eerst een klascode'); return; }
   if(bewaarCode(c)) tekenMeedoen();
 };
-addEventListener('keydown', e => { if(e.key === 'Escape'){ meedoenEl.classList.add('hidden'); } });
+addEventListener('keydown', e => { if(e.key === 'Escape'){ meedoenEl.classList.add('hidden'); document.getElementById('slotPaneel')?.classList.add('hidden'); } });
 
 // --- digibord: luisteren naar de iPads ---
 let bron = null, koppelStand = 'uit', foutTimer;
@@ -3163,9 +3187,64 @@ function startLeerling(){
 }
 if(isLeerling) startLeerling(); else verbind();
 
+// ===================== slot voor de leerkracht =====================
+// Leerlingen kunnen alleen geld erbij doen. Eruit, ongedaan maken en de instellingen
+// zijn pas zichtbaar als de leerkracht de pincode intikt. Na 10 minuten gaat het slot vanzelf weer dicht.
+const SLOT_MINUTEN = 10;
+let slotTimer;
+const isLeerkracht = () => document.body.classList.contains('leerkracht');
+async function hash(pin){
+  const tekst = 'geldpot|' + pin;
+  try{ const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(tekst));
+       return [...new Uint8Array(b)].map(x => x.toString(16).padStart(2,'0')).join(''); }
+  catch(e){ let h = 0; for(const ch of tekst) h = (h*31 + ch.charCodeAt(0)) | 0; return 'h' + h; }
+}
+async function zetPin(pin){ opslag.set('kp-pin', await hash(pin)); }
+function zetLeerkracht(aan){
+  document.body.classList.toggle('leerkracht', aan);
+  const knop = document.getElementById('slotBtn');
+  knop.textContent = aan ? '🔓' : '🔒';
+  knop.title = aan ? 'Vergrendelen (leerlingmodus)' : 'Leerkracht: ontgrendelen';
+  clearTimeout(slotTimer);
+  if(aan) slotTimer = setTimeout(() => { zetLeerkracht(false); toast('Het slot is weer dicht'); }, SLOT_MINUTEN*60000);
+  if(!aan){ paneel.classList.add('hidden'); }
+  teken();
+}
+// elke tik van de leerkracht houdt het slot langer open
+addEventListener('pointerdown', () => { if(isLeerkracht()){ clearTimeout(slotTimer); slotTimer = setTimeout(() => { zetLeerkracht(false); toast('Het slot is weer dicht'); }, SLOT_MINUTEN*60000); } }, true);
+const slotPaneel = document.getElementById('slotPaneel'), pinIn = document.getElementById('pinIn'), pin2In = document.getElementById('pin2In'), slotFout = document.getElementById('slotFout');
+document.getElementById('slotBtn').onclick = () => {
+  if(isLeerkracht()){ zetLeerkracht(false); toast('Vergrendeld: leerlingen kunnen alleen geld erbij doen'); return; }
+  const nieuw = !opslag.get('kp-pin', '');
+  document.getElementById('slotTitel').textContent = nieuw ? 'Kies een pincode' : 'Leerkracht';
+  document.getElementById('slotUitleg').textContent = nieuw
+    ? 'Met deze pincode kun jij als leerkracht geld uit de pot halen, iets ongedaan maken en de instellingen openen. Kies 4 tot 8 cijfers.'
+    : 'Tik je pincode in om geld uit de pot te kunnen halen.';
+  document.getElementById('pin2Veld').classList.toggle('hidden', !nieuw);
+  document.getElementById('slotOk').textContent = nieuw ? 'Bewaren' : 'Ontgrendelen';
+  pinIn.value = ''; pin2In.value = ''; slotFout.textContent = '';
+  slotPaneel.classList.remove('hidden'); setTimeout(() => pinIn.focus(), 50);
+};
+document.getElementById('slotAnnuleer').onclick = () => slotPaneel.classList.add('hidden');
+slotPaneel.addEventListener('click', e => { if(e.target === slotPaneel) slotPaneel.classList.add('hidden'); });
+document.getElementById('slotForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const pin = pinIn.value.trim(), opgeslagen = opslag.get('kp-pin', '');
+  if(!/^\d{4,8}$/.test(pin)){ slotFout.textContent = 'Een pincode bestaat uit 4 tot 8 cijfers.'; return; }
+  if(!opgeslagen){
+    if(pin !== pin2In.value.trim()){ slotFout.textContent = 'De twee pincodes zijn niet hetzelfde.'; return; }
+    await zetPin(pin); toast('Pincode bewaard. Onthoud hem goed!');
+  } else if(await hash(pin) !== opgeslagen){
+    slotFout.textContent = 'Verkeerde pincode.'; pinIn.value = ''; pinIn.focus(); return;
+  }
+  slotPaneel.classList.add('hidden'); document.activeElement.blur(); zetLeerkracht(true);
+});
+
 // ===================== instellingen =====================
 const paneel = document.getElementById('paneel'), nulBtn = document.getElementById('nulBtn');
 document.getElementById('instBtn').onclick = () => {
+  if(!isLeerkracht()) return;
+  document.getElementById('nieuwePin').value = '';
   document.getElementById('doelNaam').value = doel.naam;
   document.getElementById('codeIn').value = meedoen.code;
   paneel.classList.remove('hidden');
@@ -3174,7 +3253,10 @@ document.getElementById('annuleer').onclick = () => paneel.classList.add('hidden
 paneel.addEventListener('click', e => { if(e.target === paneel) paneel.classList.add('hidden'); });
 document.getElementById('instForm').addEventListener('submit', e => {
   e.preventDefault();
+  const np = document.getElementById('nieuwePin').value.trim();
+  if(np && !/^\d{4,8}$/.test(np)){ toast('De pincode moet uit 4 tot 8 cijfers bestaan'); return; }
   if(schoneCode(document.getElementById('codeIn').value) !== meedoen.code && !bewaarCode(document.getElementById('codeIn').value)) return;
+  if(np){ zetPin(np).then(() => toast('Nieuwe pincode bewaard')); }
   doel = {...doel, naam: document.getElementById('doelNaam').value.trim() || 'Klassenpot'};
   opslag.set('kp-doel', doel); paneel.classList.add('hidden'); teken();
 });
