@@ -192,8 +192,37 @@
   .codeVak b{font-family:Anton,Outfit,sans-serif;font-weight:400;font-size:clamp(34px,7vw,56px);letter-spacing:8px;color:var(--groen);text-shadow:0 0 24px rgba(34,224,122,.45)}
   .sluit{position:absolute;right:12px;top:12px;width:40px;height:40px;border-radius:12px;border:1px solid var(--rand);background:#0a101c;color:var(--tekst);font-size:16px;cursor:pointer}
   .uitleg{color:#cbd5e1;font-size:15px;line-height:1.5;margin:0 0 12px;text-align:left}
-  #zonderLink .veld{margin-bottom:10px}
-  #zonderLink .btn{width:100%;padding:14px}
+  #zonderCode .veld{margin-bottom:10px}
+  #zonderCode .veld input{width:100%;text-align:center;font-size:24px;letter-spacing:4px}
+  #zonderCode .btn{width:100%;padding:14px}
+  .koppelUitleg{margin-top:12px;color:var(--muted);font-size:14px;font-weight:600}
+  .koppelUitleg.fout{color:#fca5a5}
+  /* status van het koppelen */
+  .koppelStatus{display:inline-flex;align-items:center;gap:7px;height:32px;padding:0 12px;border-radius:999px;background:#0a101c;border:1px solid var(--rand);
+    color:var(--muted);font-weight:700;font-size:13px;white-space:nowrap;flex:none}
+  .koppelStatus i{width:9px;height:9px;border-radius:50%;background:#f59e0b;box-shadow:0 0 0 3px rgba(245,158,11,.2)}
+  .koppelStatus.aan{color:#bbf7d0}
+  .koppelStatus.aan i{background:var(--groen);box-shadow:0 0 0 3px rgba(34,224,122,.25),0 0 10px var(--groen)}
+  .koppelStatus.uit i{background:#ef4444;box-shadow:0 0 0 3px rgba(239,68,68,.2)}
+  /* leerlingscherm */
+  .leerling{position:fixed;inset:0;z-index:60;display:grid;place-items:center;padding:18px;overflow:auto}
+  .lKaart{width:min(460px,100%);background:linear-gradient(180deg,#151f33,#101828);border:1px solid var(--rand);border-radius:24px;padding:26px 24px;
+    box-shadow:0 20px 50px rgba(0,0,0,.5);display:flex;flex-direction:column;gap:10px;text-align:center}
+  .lKaart h1{font-size:44px !important;margin-bottom:2px}
+  .lKaart h2{margin:0;font-family:Anton,Outfit,sans-serif;font-weight:400;font-size:40px;letter-spacing:1px}
+  .lSub{margin:0 0 8px;color:#cbd5e1;font-size:16px;line-height:1.45}
+  .lLabel{text-align:left;color:var(--groen);font-weight:700;font-size:12px;letter-spacing:2px;text-transform:uppercase;margin-top:6px}
+  .lCode{border:2px solid var(--rand);border-radius:14px;background:#0a101c;color:#fff;font-family:Anton,Outfit,sans-serif;font-size:30px;letter-spacing:6px;text-align:center;padding:10px;outline:0}
+  .lCode:focus{border-color:var(--groen)}
+  .leerling .inp{flex:none}
+  .leerling .inp input{font-size:34px}
+  .lBtn{padding:18px !important;font-size:22px !important;margin-top:8px}
+  .lBtn:disabled{opacity:.5}
+  .lVink{width:96px;height:96px;margin:4px auto 6px;border-radius:50%;display:grid;place-items:center;font-size:56px;font-weight:800;color:#04210f;
+    background:linear-gradient(180deg,#5cf5a3,var(--groen));box-shadow:0 0 40px rgba(34,224,122,.5);animation:plop .5s cubic-bezier(.2,1.5,.4,1)}
+  @keyframes plop{from{transform:scale(0)}to{transform:scale(1)}}
+  body.isLeerling .app{display:none}
+  @media (max-width:720px){ .koppelStatus span{display:none} .koppelStatus{padding:0 10px;height:30px} }
   @media (max-width:720px){ .meedoenBtn{height:40px;font-size:18px;padding:0 10px} .mTekst{display:none} .titel{overflow:hidden} h1{font-size:26px} }
   .valler svg{display:block;filter:drop-shadow(0 2px 2px rgba(0,0,0,.4))}
   .btn.eruit{background:#1b2540;color:#fca5a5;border:1px solid #4c1d24;box-shadow:0 4px 0 #070b14}
@@ -211,6 +240,7 @@
 <div class="app">
   <header>
     <div class="titel"><h1>KLASSEN<span>POT</span></h1><div class="sub" id="doelSub"></div></div>
+    <span class="koppelStatus hidden" id="koppelStatus" title="iPads koppelen"><i></i><span id="koppelTekst"></span></span>
     <button class="meedoenBtn" id="meedoenBtn" type="button" title="Meedoen met je iPad">📱<span class="mTekst"> Meedoen</span></button>
     <div class="groep">
       <button class="ico" id="geluidBtn" type="button" title="Geluid aan/uit">🔊</button>
@@ -247,20 +277,40 @@
 <div class="paneel hidden" id="meedoen">
   <div class="kaart meedoenKaart">
     <button class="sluit" id="sluitMeedoen" type="button" aria-label="Sluiten">✕</button>
-    <div class="label">Doe mee!</div>
-    <div id="metLink">
-      <h2 class="meedoenTitel">Scan de QR-code met je iPad</h2>
+    <div class="label">Doe mee met je iPad!</div>
+    <div id="metCode">
+      <h2 class="meedoenTitel">Scan de QR-code</h2>
       <div class="qrVak" id="qrVak"></div>
       <div class="ofLink">of ga naar <b id="mLink"></b></div>
-      <div class="codeVak" id="codeVak"><span>Code</span><b id="mCode"></b></div>
+      <div class="codeVak"><span>Klascode</span><b id="mCode"></b></div>
+      <div class="koppelUitleg" id="koppelUitleg"></div>
     </div>
-    <div id="zonderLink" class="hidden">
-      <h2 class="meedoenTitel">Nog geen link ingesteld</h2>
-      <p class="uitleg">Plak hier de link van je formulier (bijvoorbeeld van Microsoft Forms of Google Forms). Daar maak ik de QR-code van. De code mag je zelf bedenken.</p>
-      <div class="veld"><input id="linkSnel" type="url" inputmode="url" placeholder="https://forms.office.com/..." autocomplete="off"></div>
-      <div class="veld"><input id="codeSnel" maxlength="12" placeholder="Code, bijv. POT8" autocomplete="off" style="text-transform:uppercase"></div>
-      <button class="btn" id="bewaarSnel" type="button">Maak QR-code</button>
+    <div id="zonderCode" class="hidden">
+      <h2 class="meedoenTitel">Bedenk een klascode</h2>
+      <p class="uitleg">Met deze code koppelen de iPads van je leerlingen aan deze pot. Kies iets dat niet makkelijk te raden is, bijvoorbeeld <b>VOS8471</b>. Gebruik letters en cijfers, minstens 4 tekens.</p>
+      <div class="veld"><input id="codeSnel" maxlength="12" placeholder="bijv. VOS8471" autocomplete="off" style="text-transform:uppercase"></div>
+      <button class="btn" id="bewaarSnel" type="button">Koppelen aanzetten</button>
     </div>
+  </div>
+</div>
+
+<!-- scherm voor leerlingen op de iPad (?leerling) -->
+<div class="leerling hidden" id="leerling">
+  <form class="lKaart" id="lForm" autocomplete="off">
+    <h1>GELD<span>POT</span></h1>
+    <p class="lSub">Stop jouw geld in de klassenpot</p>
+    <label class="lLabel" for="lCode">Klascode</label>
+    <input id="lCode" class="lCode" maxlength="12" placeholder="CODE" style="text-transform:uppercase">
+    <label class="lLabel" for="lBedrag">Hoeveel heb je opgehaald?</label>
+    <label class="inp"><span>€</span><input id="lBedrag" inputmode="decimal" placeholder="0,00"></label>
+    <button class="btn lBtn" id="lStuur" type="submit">In de pot ➜</button>
+    <div class="fout" id="lFout"></div>
+  </form>
+  <div class="lKaart lKlaar hidden" id="lKlaar">
+    <div class="lVink">✓</div>
+    <h2>Gelukt!</h2>
+    <p class="lSub"><b id="lGestuurd"></b> zit nu in de klassenpot. Kijk maar op het digibord!</p>
+    <button class="btn lBtn" id="lNog" type="button">Nog een bedrag</button>
   </div>
 </div>
 
@@ -268,8 +318,7 @@
   <form class="kaart" id="instForm">
     <h2>Instellingen</h2>
     <div class="veld"><label for="doelNaam">Waarvoor sparen we?</label><input id="doelNaam" maxlength="40"></div>
-    <div class="veld"><label for="linkIn">Link naar het formulier (voor de QR-code)</label><input id="linkIn" type="url" inputmode="url" placeholder="https://forms.office.com/..." autocomplete="off"></div>
-    <div class="veld"><label for="codeIn">Code voor de klas (zelf bedenken)</label><input id="codeIn" maxlength="12" placeholder="bijv. POT8" autocomplete="off" style="text-transform:uppercase"></div>
+    <div class="veld"><label for="codeIn">Klascode om iPads te koppelen (leeg = uit)</label><input id="codeIn" maxlength="12" placeholder="bijv. VOS8471" autocomplete="off" style="text-transform:uppercase"></div>
     <div class="knoppen">
       <button class="btn rood" type="button" id="nulBtn">Pot op nul zetten</button>
       <div style="display:flex;gap:8px"><button class="btn licht" type="button" id="annuleer">Annuleren</button><button class="btn" type="submit">Opslaan</button></div>
@@ -2917,12 +2966,12 @@ function teken(){
 // ===================== geld erbij =====================
 const form = document.getElementById('form'), bedragEl = document.getElementById('bedrag'), fout = document.getElementById('fout');
 // geld zichtbaar in de pot laten vallen (erin) of eruit laten komen (eruit)
-function geldAnimatie(c, erin, klaar){
+function geldAnimatie(c, erin, klaar, vanEl){
   if(rustig || !Element.prototype.animate){ klaar(); return; }
   const v = verdeel(c), stukken = [];
   DENOMS.forEach(d => { for(let i=0;i<(v[d]||0) && stukken.length<10;i++) stukken.push(d); });
   const bR = binnen.getBoundingClientRect(), pR = potEl.getBoundingClientRect();
-  const knop = document.getElementById(erin ? 'erbijBtn' : 'eruitBtn').getBoundingClientRect();
+  const knop = (vanEl || document.getElementById(erin ? 'erbijBtn' : 'eruitBtn')).getBoundingClientRect();
   const vulTop = stapelTop();
   const mond = {x: pR.left + pR.width/2, y: pR.top + pR.height*.05};
   const schaal = pR.width / 260;
@@ -3003,43 +3052,121 @@ form.addEventListener('submit', e => {
   });
 });
 
-// ===================== meedoen: QR-code en klascode =====================
-let meedoen = opslag.get('kp-meedoen', {link:'', code:''});
+// ===================== iPads koppelen =====================
+// Leerlingen sturen hun bedrag via de gratis berichtendienst ntfy.sh naar een "kanaal" dat bij de klascode hoort.
+// Het digibord luistert naar dat kanaal en laat het geld in de pot vallen. Er gaan alleen bedragen mee, geen namen.
+const SITE = /^https?:$/.test(location.protocol) && !/claude|anthropic/.test(location.hostname)
+  ? location.origin + location.pathname.replace(/index\.html$/,'') : 'https://sandromeertens.github.io/Geldpot/';
+const NTFY = 'https://ntfy.sh/';
+const schoneCode = c => (c||'').toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,12);
+const kanaal = code => 'geldpot-sm-' + code.toLowerCase();
+const MAX_IPAD = 50000;   // hoogstens € 500 per keer vanaf een iPad
+let meedoen = opslag.get('kp-meedoen', {code:''});
+meedoen.code = schoneCode(meedoen.code);
 const meedoenEl = document.getElementById('meedoen');
-const geldigeLink = l => /^https?:\/\/[^\s.]+\.[^\s]+$/i.test(l);
+const isLeerling = new URLSearchParams(location.search).has('leerling');
+
 function tekenMeedoen(){
-  const heeft = !!meedoen.link;
-  document.getElementById('metLink').classList.toggle('hidden', !heeft);
-  document.getElementById('zonderLink').classList.toggle('hidden', heeft);
-  if(!heeft){ document.getElementById('linkSnel').value = ''; document.getElementById('codeSnel').value = meedoen.code || ''; return; }
-  const qr = qrcode(0, 'M'); qr.addData(meedoen.link); qr.make();
+  const heeft = meedoen.code.length >= 4;
+  document.getElementById('metCode').classList.toggle('hidden', !heeft);
+  document.getElementById('zonderCode').classList.toggle('hidden', heeft);
+  if(!heeft){ document.getElementById('codeSnel').value = meedoen.code; return; }
+  const url = SITE + '?leerling&code=' + encodeURIComponent(meedoen.code);
+  const qr = qrcode(0, 'M'); qr.addData(url); qr.make();
   document.getElementById('qrVak').innerHTML = qr.createSvgTag({cellSize:8, margin:2, scalable:true});
-  let kort = meedoen.link.replace(/^https?:\/\//,'');
-  if(kort.length > 44) kort = kort.slice(0, 41) + '…';
-  document.getElementById('mLink').textContent = kort;
-  document.getElementById('codeVak').classList.toggle('hidden', !meedoen.code);
+  document.getElementById('mLink').textContent = SITE.replace(/^https?:\/\//,'') + 'ipad';
   document.getElementById('mCode').textContent = meedoen.code;
+  const u = document.getElementById('koppelUitleg');
+  u.className = 'koppelUitleg' + (koppelStand === 'uit' ? ' fout' : '');
+  u.textContent = koppelStand === 'aan' ? 'Gekoppeld: bedragen van de iPads vallen meteen in de pot.'
+    : koppelStand === 'uit' ? 'Nog geen verbinding. Koppelen werkt alleen op de website (github.io) met internet.'
+    : 'Bezig met verbinden…';
 }
-function bewaarMeedoen(link, code){
-  link = (link||'').trim(); code = (code||'').trim().toUpperCase();
-  if(link && !geldigeLink(link)){ toast('Dat lijkt geen goede link. Hij begint met https://'); return false; }
-  meedoen = {link, code}; opslag.set('kp-meedoen', meedoen); return true;
+function bewaarCode(code){
+  code = schoneCode(code);
+  if(code && code.length < 4){ toast('De klascode moet minstens 4 letters of cijfers hebben'); return false; }
+  meedoen = {code}; opslag.set('kp-meedoen', meedoen); verbind(); return true;
 }
 document.getElementById('meedoenBtn').onclick = () => { tekenMeedoen(); meedoenEl.classList.remove('hidden'); };
 document.getElementById('sluitMeedoen').onclick = () => meedoenEl.classList.add('hidden');
 meedoenEl.addEventListener('click', e => { if(e.target === meedoenEl) meedoenEl.classList.add('hidden'); });
 document.getElementById('bewaarSnel').onclick = () => {
-  const l = document.getElementById('linkSnel').value;
-  if(!l.trim()){ toast('Plak eerst de link van je formulier'); return; }
-  if(bewaarMeedoen(l, document.getElementById('codeSnel').value)) tekenMeedoen();
+  const c = document.getElementById('codeSnel').value;
+  if(!schoneCode(c)){ toast('Bedenk eerst een klascode'); return; }
+  if(bewaarCode(c)) tekenMeedoen();
 };
 addEventListener('keydown', e => { if(e.key === 'Escape'){ meedoenEl.classList.add('hidden'); } });
+
+// --- digibord: luisteren naar de iPads ---
+let bron = null, koppelStand = 'uit', foutTimer;
+let gezien = opslag.get('kp-gezien', []);
+function zetStand(stand){
+  koppelStand = stand;
+  const el = document.getElementById('koppelStatus');
+  el.classList.toggle('hidden', !meedoen.code);
+  el.classList.toggle('aan', stand === 'aan'); el.classList.toggle('uit', stand === 'uit');
+  document.getElementById('koppelTekst').textContent = stand === 'aan' ? `iPads gekoppeld · ${meedoen.code}` : stand === 'uit' ? 'Niet verbonden' : 'Verbinden…';
+  if(!meedoenEl.classList.contains('hidden')) tekenMeedoen();
+}
+function verbind(){
+  if(bron){ bron.close(); bron = null; }
+  clearTimeout(foutTimer);
+  if(isLeerling || !meedoen.code || typeof EventSource === 'undefined'){ zetStand('uit'); document.getElementById('koppelStatus').classList.toggle('hidden', !meedoen.code); return; }
+  const laatste = opslag.get('kp-laatste-' + meedoen.code, '');
+  try{ bron = new EventSource(NTFY + kanaal(meedoen.code) + '/sse' + (laatste ? '?since=' + encodeURIComponent(laatste) : '')); }
+  catch(e){ zetStand('uit'); return; }
+  zetStand('bezig');
+  bron.onopen = () => { clearTimeout(foutTimer); zetStand('aan'); };
+  bron.onerror = () => { clearTimeout(foutTimer); foutTimer = setTimeout(() => { if(!bron || bron.readyState !== 1) zetStand('uit'); }, 4000); if(bron && bron.readyState === 0) zetStand('bezig'); };
+  bron.onmessage = e => { try{ ontvang(JSON.parse(e.data)); }catch(err){} };
+}
+function ontvang(m){
+  if(!m || m.event !== 'message' || !m.id || gezien.includes(m.id)) return;
+  gezien.push(m.id); if(gezien.length > 400) gezien = gezien.slice(-400);
+  opslag.set('kp-gezien', gezien); opslag.set('kp-laatste-' + meedoen.code, m.id);
+  let b; try{ b = JSON.parse(m.message).b; }catch(err){ return; }
+  if(!Number.isInteger(b) || b <= 0 || b > MAX_IPAD) return;
+  stortingen.push(b); bewaar();
+  geldAnimatie(b, true, () => { teken(); plusTekst(b); geluid.belVoor(b); }, document.getElementById('meedoenBtn'));
+  toast(`📱 ${fmt(b)} erbij vanaf een iPad`);
+}
+
+// --- iPad van een leerling: bedrag versturen ---
+function startLeerling(){
+  document.body.classList.add('isLeerling');
+  document.getElementById('leerling').classList.remove('hidden');
+  const q = new URLSearchParams(location.search);
+  const codeEl = document.getElementById('lCode'), bedragL = document.getElementById('lBedrag'), foutL = document.getElementById('lFout'), knop = document.getElementById('lStuur');
+  codeEl.value = schoneCode(q.get('code') || opslag.get('kp-leerling-code', ''));
+  document.getElementById('lForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    const code = schoneCode(codeEl.value), c = parse(bedragL.value);
+    if(code.length < 4){ foutL.textContent = 'Vul de klascode in die op het digibord staat.'; codeEl.focus(); return; }
+    if(c === null || isNaN(c) || c <= 0){ foutL.textContent = 'Vul een bedrag in, bijvoorbeeld 2,50'; bedragL.focus(); return; }
+    if(c > MAX_IPAD){ foutL.textContent = `Meer dan ${fmt(MAX_IPAD)}? Geef het aan je juf of meester.`; return; }
+    foutL.textContent = ''; knop.disabled = true; knop.textContent = 'Versturen…';
+    try{
+      const r = await fetch(NTFY + kanaal(code), {method:'POST', body: JSON.stringify({b:c, n:Math.random().toString(36).slice(2,8)})});
+      if(!r.ok) throw new Error(r.status);
+      opslag.set('kp-leerling-code', code);
+      document.getElementById('lGestuurd').textContent = fmt(c);
+      document.getElementById('lForm').classList.add('hidden'); document.getElementById('lKlaar').classList.remove('hidden');
+      geluid.belVoor(c); bedragL.value = '';
+    }catch(err){
+      foutL.textContent = 'Versturen lukte niet. Heb je internet? Probeer het nog eens.';
+    }
+    setTimeout(() => { knop.disabled = false; knop.textContent = 'In de pot ➜'; }, 1500);
+  });
+  document.getElementById('lNog').onclick = () => {
+    document.getElementById('lKlaar').classList.add('hidden'); document.getElementById('lForm').classList.remove('hidden'); bedragL.focus();
+  };
+}
+if(isLeerling) startLeerling(); else verbind();
 
 // ===================== instellingen =====================
 const paneel = document.getElementById('paneel'), nulBtn = document.getElementById('nulBtn');
 document.getElementById('instBtn').onclick = () => {
   document.getElementById('doelNaam').value = doel.naam;
-  document.getElementById('linkIn').value = meedoen.link;
   document.getElementById('codeIn').value = meedoen.code;
   paneel.classList.remove('hidden');
 };
@@ -3047,7 +3174,7 @@ document.getElementById('annuleer').onclick = () => paneel.classList.add('hidden
 paneel.addEventListener('click', e => { if(e.target === paneel) paneel.classList.add('hidden'); });
 document.getElementById('instForm').addEventListener('submit', e => {
   e.preventDefault();
-  if(!bewaarMeedoen(document.getElementById('linkIn').value, document.getElementById('codeIn').value)) return;
+  if(schoneCode(document.getElementById('codeIn').value) !== meedoen.code && !bewaarCode(document.getElementById('codeIn').value)) return;
   doel = {...doel, naam: document.getElementById('doelNaam').value.trim() || 'Klassenpot'};
   opslag.set('kp-doel', doel); paneel.classList.add('hidden'); teken();
 });
