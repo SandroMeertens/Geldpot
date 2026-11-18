@@ -227,6 +227,17 @@
     background:linear-gradient(180deg,#5cf5a3,var(--groen));box-shadow:0 0 40px rgba(34,224,122,.5);animation:plop .5s cubic-bezier(.2,1.5,.4,1)}
   @keyframes plop{from{transform:scale(0)}to{transform:scale(1)}}
   body.isLeerling .app{display:none}
+  .lWrap{width:min(460px,100%);display:flex;flex-direction:column;gap:12px;align-items:stretch}
+  .lTitel{text-align:center;font-size:40px !important;margin:0}
+  .lTabs{display:grid;grid-template-columns:1fr 1fr;gap:6px;background:#0a101c;border:1px solid var(--rand);border-radius:16px;padding:5px}
+  .lTab{border:0;border-radius:12px;background:transparent;color:var(--muted);font:inherit;font-weight:700;font-size:16px;padding:12px 6px;cursor:pointer}
+  .lTab.on{background:linear-gradient(180deg,#5cf5a3,var(--groen));color:#04210f}
+  .lKaart{width:100% !important}
+  .lTotaal{font-family:Anton,Outfit,sans-serif;font-size:56px;color:#fff;line-height:1.05;text-shadow:0 0 30px rgba(34,224,122,.3)}
+  .lPotPlek{height:min(46vh,420px);display:flex}
+  .lPotPlek .potKaart{flex:1;box-shadow:none !important;border:0 !important;background:transparent !important;padding:0}
+  .lInfo{color:var(--muted);font-size:14px;font-weight:600}
+  .lKlaar .btn.licht,.lBekijk .btn.licht{padding:14px;font-size:17px}
   @media (max-width:720px){ .koppelStatus span{display:none} .koppelStatus{padding:0 10px;height:30px} }
   @media (max-width:720px){ .meedoenBtn{height:40px;font-size:18px;padding:0 10px} .mTekst{display:none} .titel{overflow:hidden} h1{font-size:26px} }
   .valler svg{display:block;filter:drop-shadow(0 2px 2px rgba(0,0,0,.4))}
@@ -317,8 +328,13 @@
 
 <!-- scherm voor leerlingen op de iPad (?leerling) -->
 <div class="leerling hidden" id="leerling">
+ <div class="lWrap">
+  <h1 class="lTitel">GELD<span>POT</span></h1>
+  <div class="lTabs">
+    <button class="lTab on" type="button" data-l="erbij">💶 Geld erbij</button>
+    <button class="lTab" type="button" data-l="bekijk">🫙 Bekijk de pot</button>
+  </div>
   <form class="lKaart" id="lForm" autocomplete="off">
-    <h1>GELD<span>POT</span></h1>
     <p class="lSub">Stop jouw geld in de klassenpot</p>
     <label class="lLabel" for="lCode">Klascode</label>
     <input id="lCode" class="lCode" maxlength="12" placeholder="CODE" style="text-transform:uppercase">
@@ -332,7 +348,16 @@
     <h2>Gelukt!</h2>
     <p class="lSub"><b id="lGestuurd"></b> zit nu in de klassenpot. Kijk maar op het digibord!</p>
     <button class="btn lBtn" id="lNog" type="button">Nog een bedrag</button>
+    <button class="btn licht" id="lNaarPot" type="button">🫙 Bekijk de pot</button>
   </div>
+  <div class="lKaart lBekijk hidden" id="lBekijk">
+    <div class="lLabel" style="text-align:center">Samen gespaard</div>
+    <div class="lTotaal" id="lTotaal">€ 0,00</div>
+    <div class="lPotPlek" id="lPotPlek"></div>
+    <div class="lInfo" id="lInfo"></div>
+    <button class="btn licht" id="lVernieuw" type="button">↻ Vernieuwen</button>
+  </div>
+ </div>
 </div>
 
 <div class="paneel hidden" id="paneel">
@@ -2870,7 +2895,7 @@ const rustig = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)
 let doel = opslag.get('kp-doel', {naam:'Eindejaarsweek groep 8', bedrag:50000});
 let stortingen = opslag.get('kp-stortingen', []);     // lijst bedragen in centen
 const totaalNu = () => stortingen.reduce((s,b) => s + b, 0);
-const bewaar = () => opslag.set('kp-stortingen', stortingen);
+const bewaar = () => { opslag.set('kp-stortingen', stortingen); if(typeof planStand === 'function') planStand(); };
 
 // ===================== de glazen pot =====================
 const PW = 200, PH = 250;
@@ -3140,7 +3165,7 @@ function verbind(){
   try{ bron = new EventSource(NTFY + kanaal(meedoen.code) + '/sse' + (laatste ? '?since=' + encodeURIComponent(laatste) : '')); }
   catch(e){ zetStand('uit'); return; }
   zetStand('bezig');
-  bron.onopen = () => { clearTimeout(foutTimer); zetStand('aan'); };
+  bron.onopen = () => { clearTimeout(foutTimer); zetStand('aan'); planStand(); };
   bron.onerror = () => { clearTimeout(foutTimer); foutTimer = setTimeout(() => { if(!bron || bron.readyState !== 1) zetStand('uit'); }, 4000); if(bron && bron.readyState === 0) zetStand('bezig'); };
   bron.onmessage = e => { try{ ontvang(JSON.parse(e.data)); }catch(err){} };
 }
@@ -3154,6 +3179,22 @@ function ontvang(m){
   geldAnimatie(b, true, () => { teken(); plusTekst(b); geluid.belVoor(b); }, document.getElementById('meedoenBtn'));
   toast(`📱 ${fmt(b)} erbij vanaf een iPad`);
 }
+
+// --- digibord: de stand van de pot delen, zodat leerlingen hem op hun iPad kunnen bekijken ---
+// Alleen het totaal en hoeveel munten en briefjes er van elke soort in zitten. Hoogstens één bericht per paar seconden.
+let standTimer, standLaatst = '', standHerhaal;
+function planStand(){
+  if(isLeerling || !meedoen.code) return;
+  clearTimeout(standTimer); standTimer = setTimeout(stuurStand, 2500);
+}
+async function stuurStand(){
+  if(isLeerling || !meedoen.code) return;
+  const tel = {}; potInhoud().forEach(d => tel[d] = (tel[d]||0) + 1);
+  const bericht = JSON.stringify({t: totaalNu(), c: tel, at: Date.now()});
+  try{ await fetch(NTFY + kanaal(meedoen.code) + '-stand', {method:'POST', body: bericht}); standLaatst = bericht; }catch(e){}
+}
+// berichten blijven ongeveer 12 uur bewaard: zolang het digibord openstaat, elke 6 uur opnieuw sturen
+standHerhaal = setInterval(() => { if(meedoen.code && !isLeerling) stuurStand(); }, 6*3600*1000);
 
 // --- iPad van een leerling: bedrag versturen ---
 function startLeerling(){
@@ -3184,6 +3225,49 @@ function startLeerling(){
   document.getElementById('lNog').onclick = () => {
     document.getElementById('lKlaar').classList.add('hidden'); document.getElementById('lForm').classList.remove('hidden'); bedragL.focus();
   };
+
+  // --- tabblad "Bekijk de pot" ---
+  const bekijk = document.getElementById('lBekijk'), info = document.getElementById('lInfo'), vernieuw = document.getElementById('lVernieuw');
+  const potPlek = document.getElementById('lPotPlek');
+  potPlek.appendChild(document.getElementById('potKaart'));   // de glazen pot van het digibord hergebruiken
+  const lTotaal = document.getElementById('lTotaal');
+  let laatstOpgehaald = 0;
+  function kiesTab(welk){
+    document.querySelectorAll('.lTab').forEach(t => t.classList.toggle('on', t.dataset.l === welk));
+    bekijk.classList.toggle('hidden', welk !== 'bekijk');
+    document.getElementById('lForm').classList.toggle('hidden', welk !== 'erbij');
+    document.getElementById('lKlaar').classList.add('hidden');
+    if(welk === 'bekijk' && Date.now() - laatstOpgehaald > 15000) haalStand();
+  }
+  document.querySelectorAll('.lTab').forEach(t => t.onclick = () => kiesTab(t.dataset.l));
+  document.getElementById('lNaarPot').onclick = () => { laatstOpgehaald = 0; kiesTab('bekijk'); };
+  vernieuw.onclick = () => { if(Date.now() - laatstOpgehaald > 5000) haalStand(); };
+  async function haalStand(){
+    const code = schoneCode(codeEl.value);
+    if(code.length < 4){ info.textContent = 'Vul eerst de klascode in bij "Geld erbij".'; return; }
+    laatstOpgehaald = Date.now(); vernieuw.disabled = true; info.textContent = 'De pot wordt opgehaald…';
+    try{
+      const r = await fetch(NTFY + kanaal(code) + '-stand/json?poll=1&since=12h');
+      if(!r.ok) throw new Error(r.status);
+      const regels = (await r.text()).trim().split('\n').filter(Boolean).map(x => { try{ return JSON.parse(x); }catch(e){ return null; } })
+        .filter(m => m && m.event === 'message');
+      let stand = null;
+      for(const m of regels){ try{ const s = JSON.parse(m.message); if(Number.isInteger(s.t) && s.c) stand = s; }catch(e){} }
+      if(!stand){ info.textContent = 'Nog niets te zien. Vraag je juf of meester om de Geldpot op het digibord open te zetten.'; return; }
+      // de pot tekenen met de munten en briefjes van het digibord (alleen hier bekijken, niet bewaren)
+      const lijst = []; DENOMS.forEach(d => { for(let k=0;k<Math.min(+stand.c[d]||0, 2000);k++) lijst.push(d); });
+      stortingen = lijst;
+      opslag.set('kp-leerling-code', code);
+      lTotaal._v = lTotaal._v ?? 0; telOp(lTotaal, stand.t);
+      potMaat(); tekenPot();
+      const tijd = new Date(stand.at || Date.now());
+      info.textContent = 'Bijgewerkt om ' + tijd.toLocaleTimeString('nl-NL', {hour:'2-digit', minute:'2-digit'});
+    }catch(err){
+      info.textContent = 'Ophalen lukte niet. Heb je internet? Probeer het zo nog eens.';
+    }finally{
+      setTimeout(() => vernieuw.disabled = false, 5000);
+    }
+  }
 }
 if(isLeerling) startLeerling(); else verbind();
 
