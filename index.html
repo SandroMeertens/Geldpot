@@ -4,6 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Klassenpot</title>
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Geldpot">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0b1120">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Outfit:wght@600;700;800&family=Inter:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -197,6 +204,34 @@
   #zonderCode .btn{width:100%;padding:14px}
   .koppelUitleg{margin-top:12px;color:var(--muted);font-size:14px;font-weight:600}
   .koppelUitleg.fout{color:#fca5a5}
+  /* wachtrij van iPad-bedragen */
+  .wachtBtn{border:0;border-radius:999px;height:36px;padding:0 14px;background:#f59e0b;color:#2a1600;font:inherit;font-weight:800;font-size:14px;cursor:pointer;
+    flex:none;box-shadow:0 0 0 4px rgba(245,158,11,.25);animation:puls 1.6s ease-in-out infinite}
+  @keyframes puls{50%{box-shadow:0 0 0 9px rgba(245,158,11,.05)}}
+  .wachtKaart{width:min(480px,100%) !important;max-height:90vh;position:relative}
+  .wachtLijst{display:flex;flex-direction:column;gap:6px;overflow:auto;max-height:46vh}
+  .wachtRij{display:flex;align-items:center;gap:10px;background:#0a101c;border:1px solid var(--rand);border-radius:12px;padding:8px 10px}
+  .wachtRij b{font-family:Anton,Outfit,sans-serif;font-weight:400;font-size:24px;color:#fff;flex:1}
+  .wachtRij small{color:var(--muted);font-weight:600}
+  .wachtRij button{width:44px;height:40px;border-radius:10px;border:1px solid var(--rand);font-size:18px;font-weight:800;cursor:pointer}
+  .wachtRij .ja{background:var(--groen);color:#04210f;border-color:var(--groen)}
+  .wachtRij .nee{background:#2a1218;color:#fca5a5}
+  body.leerkracht .slotNodig{display:none}
+  body:not(.leerkracht) .wachtRij button{display:none}
+  .vinkje{display:flex;align-items:center;gap:10px;font-weight:600;font-size:15px;cursor:pointer}
+  .vinkje input{width:20px;height:20px;accent-color:var(--groen)}
+  .backup{border-top:1px solid var(--rand);padding-top:12px;display:flex;flex-direction:column;gap:8px}
+  .veldLabel{font-weight:700;font-size:13px;color:var(--muted)}
+  .backupInfo{font-size:14px;color:#cbd5e1}
+  .backupInfo.oud{color:#fbbf24}
+  .backupKnoppen{display:flex;gap:8px;flex-wrap:wrap}
+  .backupKnoppen .btn{flex:1;padding:10px 12px;font-size:15px}
+  .backupVraag{background:#0a101c;border:1px solid var(--rand);border-radius:12px;padding:10px;font-size:14px;display:flex;flex-direction:column;gap:8px}
+  #instForm{max-height:94vh;overflow:auto}
+  /* tip op de iPad */
+  .lTip{display:flex;align-items:center;gap:10px;background:#0a101c;border:1px solid var(--rand);border-radius:14px;padding:10px 12px;color:#cbd5e1;font-size:14px;text-align:left}
+  .lTip button{margin-left:auto;border:0;background:none;color:var(--muted);font-size:16px;cursor:pointer}
+  .lTip .deel{display:inline-block;border:1px solid var(--muted);border-radius:4px;padding:0 4px;font-size:12px}
   /* alleen voor de leerkracht */
   body:not(.leerkracht) .alleenLeerkracht{display:none !important}
   body.leerkracht #slotBtn{background:rgba(34,224,122,.18)}
@@ -256,6 +291,7 @@
 <div class="app">
   <header>
     <div class="titel"><h1>KLASSEN<span>POT</span></h1><div class="sub" id="doelSub"></div></div>
+    <button class="wachtBtn hidden" id="wachtBtn" type="button" title="Bedragen van iPads goedkeuren">📱 <b id="wachtAantal">0</b><span class="mTekst"> wachten</span></button>
     <span class="koppelStatus hidden" id="koppelStatus" title="iPads koppelen"><i></i><span id="koppelTekst"></span></span>
     <button class="meedoenBtn" id="meedoenBtn" type="button" title="Meedoen met je iPad">📱<span class="mTekst"> Meedoen</span></button>
     <div class="groep">
@@ -289,6 +325,17 @@
       </section>
     </div>
   </main>
+</div>
+
+<div class="paneel hidden" id="wachtPaneel">
+  <div class="kaart wachtKaart">
+    <button class="sluit" id="sluitWacht" type="button" aria-label="Sluiten">✕</button>
+    <h2>Goedkeuren</h2>
+    <p class="uitleg">Deze bedragen zijn vanaf een iPad gestuurd. Klopt het? Tik op ✓ en het geld valt in de pot. Klopt het niet? Tik op ✕.</p>
+    <p class="uitleg slotNodig" id="wachtSlot">Ontgrendel eerst met het slotje 🔒 om bedragen goed te keuren.</p>
+    <div class="wachtLijst" id="wachtLijst"></div>
+    <div class="knoppen alleenLeerkracht"><button class="btn rood" type="button" id="allesAf">Alles weigeren</button><button class="btn" type="button" id="allesGoed">Alles goedkeuren</button></div>
+  </div>
 </div>
 
 <div class="paneel hidden" id="slotPaneel">
@@ -330,6 +377,10 @@
 <div class="leerling hidden" id="leerling">
  <div class="lWrap">
   <h1 class="lTitel">GELD<span>POT</span></h1>
+  <div class="lTip hidden" id="lTip">
+    <span>📲 <b>Tip:</b> zet de Geldpot op je beginscherm. Tik op <b>Deel</b> <span class="deel">⬆︎</span> en kies <b>Zet op beginscherm</b>.</span>
+    <button type="button" id="lTipWeg" aria-label="Tip sluiten">✕</button>
+  </div>
   <div class="lTabs">
     <button class="lTab on" type="button" data-l="erbij">💶 Geld erbij</button>
     <button class="lTab" type="button" data-l="bekijk">🫙 Bekijk de pot</button>
@@ -346,7 +397,7 @@
   <div class="lKaart lKlaar hidden" id="lKlaar">
     <div class="lVink">✓</div>
     <h2>Gelukt!</h2>
-    <p class="lSub"><b id="lGestuurd"></b> zit nu in de klassenpot. Kijk maar op het digibord!</p>
+    <p class="lSub"><b id="lGestuurd"></b> is verstuurd naar de klassenpot! Soms keurt je juf of meester het eerst even goed. Kijk maar op het digibord.</p>
     <button class="btn lBtn" id="lNog" type="button">Nog een bedrag</button>
     <button class="btn licht" id="lNaarPot" type="button">🫙 Bekijk de pot</button>
   </div>
@@ -366,6 +417,18 @@
     <div class="veld"><label for="doelNaam">Waarvoor sparen we?</label><input id="doelNaam" maxlength="40"></div>
     <div class="veld"><label for="nieuwePin">Nieuwe pincode voor de leerkracht (leeg = niet wijzigen)</label><input id="nieuwePin" type="password" inputmode="numeric" maxlength="8" autocomplete="new-password"></div>
     <div class="veld"><label for="codeIn">Klascode om iPads te koppelen (leeg = uit)</label><input id="codeIn" maxlength="12" placeholder="bijv. VOS8471" autocomplete="off" style="text-transform:uppercase"></div>
+    <label class="vinkje"><input type="checkbox" id="goedkeurIn"> Bedragen van iPads eerst zelf goedkeuren</label>
+    <div class="backup">
+      <div class="veldLabel">Back-up</div>
+      <div class="backupInfo" id="backupInfo"></div>
+      <div class="backupKnoppen">
+        <button class="btn licht" type="button" id="backupMaak">⬇️ Back-up maken</button>
+        <button class="btn licht" type="button" id="backupKies">⬆️ Terugzetten</button>
+        <input type="file" id="backupBestand" accept=".json,application/json" hidden>
+      </div>
+      <div class="backupVraag hidden" id="backupVraag"><span id="backupVraagTekst"></span>
+        <div class="backupKnoppen"><button class="btn licht" type="button" id="backupNee">Annuleren</button><button class="btn" type="button" id="backupJa">Ja, terugzetten</button></div></div>
+    </div>
     <div class="knoppen">
       <button class="btn rood" type="button" id="nulBtn">Pot op nul zetten</button>
       <div style="display:flex;gap:8px"><button class="btn licht" type="button" id="annuleer">Annuleren</button><button class="btn" type="submit">Opslaan</button></div>
@@ -3144,7 +3207,7 @@ document.getElementById('bewaarSnel').onclick = () => {
   if(!schoneCode(c)){ toast('Bedenk eerst een klascode'); return; }
   if(bewaarCode(c)) tekenMeedoen();
 };
-addEventListener('keydown', e => { if(e.key === 'Escape'){ meedoenEl.classList.add('hidden'); document.getElementById('slotPaneel')?.classList.add('hidden'); } });
+addEventListener('keydown', e => { if(e.key === 'Escape'){ meedoenEl.classList.add('hidden'); document.getElementById('slotPaneel')?.classList.add('hidden'); document.getElementById('wachtPaneel')?.classList.add('hidden'); } });
 
 // --- digibord: luisteren naar de iPads ---
 let bron = null, koppelStand = 'uit', foutTimer;
@@ -3175,10 +3238,64 @@ function ontvang(m){
   opslag.set('kp-gezien', gezien); opslag.set('kp-laatste-' + meedoen.code, m.id);
   let b; try{ b = JSON.parse(m.message).b; }catch(err){ return; }
   if(!Number.isInteger(b) || b <= 0 || b > MAX_IPAD) return;
+  if(goedkeuren){
+    wachtrij.push({id: m.id, b, t: (m.time || Date.now()/1000)*1000}); bewaarWacht();
+    geluid.geld(100); toast(`📱 ${fmt(b)} wacht op goedkeuring`);
+    return;
+  }
   stortingen.push(b); bewaar();
   geldAnimatie(b, true, () => { teken(); plusTekst(b); geluid.belVoor(b); }, document.getElementById('meedoenBtn'));
   toast(`📱 ${fmt(b)} erbij vanaf een iPad`);
 }
+
+// --- wachtrij: bedragen van iPads eerst goedkeuren ---
+let goedkeuren = opslag.get('kp-goedkeuren', true);
+let wachtrij = opslag.get('kp-wachtrij', []);
+const wachtPaneel = document.getElementById('wachtPaneel');
+function bewaarWacht(){ opslag.set('kp-wachtrij', wachtrij); tekenWacht(); }
+function tekenWacht(){
+  const n = wachtrij.length;
+  document.getElementById('wachtBtn').classList.toggle('hidden', !n || isLeerling);
+  document.getElementById('wachtAantal').textContent = n;
+  const lijst = document.getElementById('wachtLijst');
+  lijst.innerHTML = n ? '' : '<p class="uitleg" style="text-align:center">Er wacht niets meer. 👍</p>';
+  wachtrij.forEach(w => {
+    const rij = document.createElement('div'); rij.className = 'wachtRij';
+    const tijd = new Date(w.t).toLocaleTimeString('nl-NL', {hour:'2-digit', minute:'2-digit'});
+    rij.innerHTML = `<b>${fmt(w.b)}</b><small>${tijd}</small><button class="nee" type="button" title="Weigeren">✕</button><button class="ja" type="button" title="Goedkeuren">✓</button>`;
+    rij.querySelector('.ja').onclick = () => keurGoed(w.id);
+    rij.querySelector('.nee').onclick = () => keurAf(w.id);
+    lijst.appendChild(rij);
+  });
+  if(!n) setTimeout(() => { if(!wachtrij.length) wachtPaneel.classList.add('hidden'); }, 900);
+}
+function keurGoed(id){
+  if(!isLeerkracht()) return;
+  const w = wachtrij.find(x => x.id === id); if(!w) return;
+  wachtrij = wachtrij.filter(x => x.id !== id); bewaarWacht();
+  stortingen.push(w.b); bewaar();
+  geldAnimatie(w.b, true, () => { teken(); plusTekst(w.b); geluid.belVoor(w.b); }, document.getElementById('wachtBtn').classList.contains('hidden') ? document.getElementById('meedoenBtn') : document.getElementById('wachtBtn'));
+}
+function keurAf(id){
+  if(!isLeerkracht()) return;
+  wachtrij = wachtrij.filter(x => x.id !== id); bewaarWacht(); toast('Bedrag geweigerd');
+}
+document.getElementById('wachtBtn').onclick = () => { tekenWacht(); wachtPaneel.classList.remove('hidden'); };
+document.getElementById('sluitWacht').onclick = () => wachtPaneel.classList.add('hidden');
+wachtPaneel.addEventListener('click', e => { if(e.target === wachtPaneel) wachtPaneel.classList.add('hidden'); });
+document.getElementById('allesGoed').onclick = () => {
+  if(!isLeerkracht() || !wachtrij.length) return;
+  const alle = wachtrij.slice(); wachtrij = []; bewaarWacht(); wachtPaneel.classList.add('hidden');
+  const som = alle.reduce((s,w) => s + w.b, 0);
+  alle.forEach(w => stortingen.push(w.b)); bewaar();
+  geldAnimatie(som, true, () => { teken(); plusTekst(som); geluid.belVoor(som); }, document.getElementById('meedoenBtn'));
+};
+document.getElementById('allesAf').onclick = () => {
+  const k = document.getElementById('allesAf');
+  if(!k.dataset.zeker){ k.dataset.zeker = 1; k.textContent = 'Zeker weten?'; setTimeout(() => { delete k.dataset.zeker; k.textContent = 'Alles weigeren'; }, 3000); return; }
+  delete k.dataset.zeker; k.textContent = 'Alles weigeren';
+  wachtrij = []; bewaarWacht(); toast('Alle wachtende bedragen zijn geweigerd');
+};
 
 // --- digibord: de stand van de pot delen, zodat leerlingen hem op hun iPad kunnen bekijken ---
 // Alleen het totaal en hoeveel munten en briefjes er van elke soort in zitten. Hoogstens één bericht per paar seconden.
@@ -3200,6 +3317,11 @@ standHerhaal = setInterval(() => { if(meedoen.code && !isLeerling) stuurStand();
 function startLeerling(){
   document.body.classList.add('isLeerling');
   document.getElementById('leerling').classList.remove('hidden');
+  // als app op het beginscherm: manifest alleen voor leerlingen, zodat het icoon het leerlingscherm opent
+  const mf = document.createElement('link'); mf.rel = 'manifest'; mf.href = 'manifest.json'; document.head.appendChild(mf);
+  const losseApp = navigator.standalone === true || (window.matchMedia && matchMedia('(display-mode: standalone)').matches);
+  if(!losseApp && !opslag.get('kp-tip-weg', false)) document.getElementById('lTip').classList.remove('hidden');
+  document.getElementById('lTipWeg').onclick = () => { opslag.set('kp-tip-weg', true); document.getElementById('lTip').classList.add('hidden'); };
   const q = new URLSearchParams(location.search);
   const codeEl = document.getElementById('lCode'), bedragL = document.getElementById('lBedrag'), foutL = document.getElementById('lFout'), knop = document.getElementById('lStuur');
   codeEl.value = schoneCode(q.get('code') || opslag.get('kp-leerling-code', ''));
@@ -3292,7 +3414,7 @@ function zetLeerkracht(aan){
   clearTimeout(slotTimer);
   if(aan) slotTimer = setTimeout(() => { zetLeerkracht(false); toast('Het slot is weer dicht'); }, SLOT_MINUTEN*60000);
   if(!aan){ paneel.classList.add('hidden'); }
-  teken();
+  teken(); if(typeof tekenWacht === 'function') tekenWacht();
 }
 // elke tik van de leerkracht houdt het slot langer open
 addEventListener('pointerdown', () => { if(isLeerkracht()){ clearTimeout(slotTimer); slotTimer = setTimeout(() => { zetLeerkracht(false); toast('Het slot is weer dicht'); }, SLOT_MINUTEN*60000); } }, true);
@@ -3328,6 +3450,8 @@ document.getElementById('slotForm').addEventListener('submit', async e => {
 const paneel = document.getElementById('paneel'), nulBtn = document.getElementById('nulBtn');
 document.getElementById('instBtn').onclick = () => {
   if(!isLeerkracht()) return;
+  document.getElementById('goedkeurIn').checked = goedkeuren;
+  tekenBackupInfo(); document.getElementById('backupVraag').classList.add('hidden');
   document.getElementById('nieuwePin').value = '';
   document.getElementById('doelNaam').value = doel.naam;
   document.getElementById('codeIn').value = meedoen.code;
@@ -3341,6 +3465,7 @@ document.getElementById('instForm').addEventListener('submit', e => {
   if(np && !/^\d{4,8}$/.test(np)){ toast('De pincode moet uit 4 tot 8 cijfers bestaan'); return; }
   if(schoneCode(document.getElementById('codeIn').value) !== meedoen.code && !bewaarCode(document.getElementById('codeIn').value)) return;
   if(np){ zetPin(np).then(() => toast('Nieuwe pincode bewaard')); }
+  goedkeuren = document.getElementById('goedkeurIn').checked; opslag.set('kp-goedkeuren', goedkeuren);
   doel = {...doel, naam: document.getElementById('doelNaam').value.trim() || 'Klassenpot'};
   opslag.set('kp-doel', doel); paneel.classList.add('hidden'); teken();
 });
@@ -3349,6 +3474,46 @@ nulBtn.onclick = () => {
     setTimeout(() => { delete nulBtn.dataset.zeker; nulBtn.textContent = 'Pot op nul zetten'; }, 3000); return; }
   stortingen = []; bewaar(); delete nulBtn.dataset.zeker; nulBtn.textContent = 'Pot op nul zetten';
   paneel.classList.add('hidden'); teken(); toast('De pot staat weer op nul');
+};
+
+// ===================== back-up =====================
+function tekenBackupInfo(){
+  const d = opslag.get('kp-backup-datum', 0), el = document.getElementById('backupInfo');
+  if(!d){ el.textContent = 'Je hebt nog geen back-up gemaakt.'; el.className = 'backupInfo oud'; return; }
+  const dagen = Math.floor((Date.now() - d) / 86400000);
+  el.textContent = 'Laatste back-up: ' + (dagen === 0 ? 'vandaag' : dagen === 1 ? 'gisteren' : `${dagen} dagen geleden`) + '.';
+  el.className = 'backupInfo' + (dagen >= 7 ? ' oud' : '');
+}
+document.getElementById('backupMaak').onclick = () => {
+  if(!isLeerkracht()) return;
+  const data = {app:'geldpot', versie:1, gemaakt:new Date().toISOString(), totaal: totaalNu(), stortingen, naam: doel.naam, klascode: meedoen.code, goedkeuren, wachtrij};
+  const blob = new Blob([JSON.stringify(data, null, 1)], {type:'application/json'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = 'geldpot-backup-' + new Date().toISOString().slice(0,10) + '.json';
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  opslag.set('kp-backup-datum', Date.now()); tekenBackupInfo(); toast('Back-up opgeslagen in je downloads');
+};
+let teruggezet = null;
+document.getElementById('backupKies').onclick = () => document.getElementById('backupBestand').click();
+document.getElementById('backupBestand').onchange = async e => {
+  const f = e.target.files[0]; e.target.value = ''; if(!f) return;
+  try{
+    const d = JSON.parse(await f.text());
+    if(d.app !== 'geldpot' || !Array.isArray(d.stortingen) || !d.stortingen.every(x => Number.isInteger(x) && Math.abs(x) <= 10000000)) throw new Error();
+    teruggezet = d;
+    const som = d.stortingen.reduce((a,b) => a+b, 0);
+    document.getElementById('backupVraagTekst').textContent = `Deze back-up is van ${new Date(d.gemaakt).toLocaleString('nl-NL', {day:'numeric', month:'long', hour:'2-digit', minute:'2-digit'})} en bevat ${fmt(som)}. De pot nu (${fmt(totaalNu())}) wordt vervangen.`;
+    document.getElementById('backupVraag').classList.remove('hidden');
+  }catch(err){ toast('Dit is geen geldige back-up van de Geldpot'); }
+};
+document.getElementById('backupNee').onclick = () => { teruggezet = null; document.getElementById('backupVraag').classList.add('hidden'); };
+document.getElementById('backupJa').onclick = () => {
+  if(!teruggezet || !isLeerkracht()) return;
+  stortingen = teruggezet.stortingen.slice(); bewaar();
+  if(teruggezet.naam){ doel = {...doel, naam: teruggezet.naam}; opslag.set('kp-doel', doel); }
+  if(Array.isArray(teruggezet.wachtrij)){ wachtrij = teruggezet.wachtrij.filter(w => w && Number.isInteger(w.b)); bewaarWacht(); }
+  teruggezet = null; document.getElementById('backupVraag').classList.add('hidden'); paneel.classList.add('hidden');
+  totaalEl._v = 0; teken(); toast('Back-up teruggezet');
 };
 
 // ===================== geluid en digibord =====================
@@ -3368,6 +3533,7 @@ document.addEventListener('fullscreenchange', () => { if(!document.fullscreenEle
 
 totaalEl._v = totaalNu();
 teken();
+tekenWacht();
 </script>
 </body>
 </html>
