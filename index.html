@@ -204,6 +204,41 @@
   #zonderCode .btn{width:100%;padding:14px}
   .koppelUitleg{margin-top:12px;color:var(--muted);font-size:14px;font-weight:600}
   .koppelUitleg.fout{color:#fca5a5}
+  /* grafiek van de groei */
+  .groei{margin-top:18px;position:relative}
+  .groeiKop{color:var(--muted);font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:6px}
+  .groeiPlek{height:112px;position:relative}
+  .groeiPlek svg{display:block;width:100%;height:100%;overflow:visible}
+  .groeiPlek .leegGrafiek{height:100%;display:grid;place-items:center;color:var(--muted);font-size:13px;font-weight:600;border:1px dashed var(--rand);border-radius:12px}
+  .groeiTip{position:absolute;z-index:5;pointer-events:none;background:#0a101c;border:1px solid var(--rand);border-radius:10px;padding:6px 10px;
+    font-size:13px;font-weight:600;color:var(--muted);white-space:nowrap;box-shadow:0 8px 20px rgba(0,0,0,.4);transform:translate(-50%,-100%)}
+  .groeiTip b{display:block;color:#fff;font-family:Anton,Outfit,sans-serif;font-weight:400;font-size:18px;letter-spacing:.5px}
+  @media (max-width:720px){ .groei{display:none} }
+  @media (max-height:820px) and (min-width:721px){ .uitnodiging{display:none} }
+  /* lijst van stortingen */
+  .lijstKnop{margin-top:10px;border:1px solid var(--rand);background:#0a101c;color:var(--tekst);border-radius:10px;padding:8px 12px;font:inherit;font-weight:700;font-size:14px;cursor:pointer}
+  .lijstKaart{width:min(560px,100%) !important;max-height:90vh;position:relative}
+  .stortLijst{overflow:auto;max-height:62vh;display:flex;flex-direction:column;gap:4px}
+  .stortRij{display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:center;gap:10px;background:#0a101c;border:1px solid var(--rand);border-radius:10px;padding:7px 10px}
+  .stortRij .wanneer{font-weight:600;font-size:13px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .stortRij .wanneer span{color:#cbd5e1}
+  .stortRij b{font-family:Anton,Outfit,sans-serif;font-weight:400;font-size:20px;letter-spacing:.5px;color:#fff;text-align:right}
+  .stortRij b.min{color:#fb7185}
+  .stortRij button{height:32px;min-width:36px;border-radius:8px;border:1px solid var(--rand);background:#161b25;color:var(--muted);font:inherit;font-weight:700;font-size:13px;cursor:pointer;padding:0 8px}
+  .stortRij button.zeker{background:#c8324a;color:#fff;border-color:#c8324a}
+  .stortDag{color:var(--groen);font-weight:700;font-size:12px;letter-spacing:1.5px;text-transform:uppercase;margin:8px 2px 2px}
+  /* presentatiestand */
+  .presentStop{display:none;position:fixed;right:16px;bottom:16px;z-index:40;border:1px solid var(--rand);background:rgba(10,16,28,.85);color:var(--muted);
+    border-radius:12px;padding:10px 14px;font:inherit;font-weight:700;cursor:pointer;opacity:.5}
+  .presentStop:hover{opacity:1}
+  body.presentatie .presentStop{display:block}
+  body.presentatie .invoerKaart,body.presentatie header .groep,body.presentatie .meedoenBtn{display:none !important}
+  body.presentatie .app{max-width:1600px}
+  body.presentatie .totaal{font-size:clamp(56px,7.5vw,150px);white-space:nowrap}
+  body.presentatie .standKaart .label{font-size:16px}
+  body.presentatie .groeiPlek{height:min(30vh,240px)}
+  body.presentatie .rechts{justify-content:center !important}
+  @media (max-width:720px){ body.presentatie main{grid-template-rows:auto minmax(0,1fr)} }
   /* wachtrij van iPad-bedragen */
   .wachtBtn{border:0;border-radius:999px;height:36px;padding:0 14px;background:#f59e0b;color:#2a1600;font:inherit;font-weight:800;font-size:14px;cursor:pointer;
     flex:none;box-shadow:0 0 0 4px rgba(245,158,11,.25);animation:puls 1.6s ease-in-out infinite}
@@ -296,6 +331,7 @@
     <button class="meedoenBtn" id="meedoenBtn" type="button" title="Meedoen met je iPad">📱<span class="mTekst"> Meedoen</span></button>
     <div class="groep">
       <button class="ico" id="geluidBtn" type="button" title="Geluid aan/uit">🔊</button>
+      <button class="ico" id="presentBtn" type="button" title="Presentatiestand: alleen de pot en het totaal">📺</button>
       <button class="ico" id="groterBtn" type="button" title="Beeldvullend voor het digibord">⛶</button>
       <button class="ico alleenLeerkracht" id="instBtn" type="button" title="Instellingen">⚙️</button>
       <button class="ico" id="slotBtn" type="button" title="Leerkracht: ontgrendelen">🔒</button>
@@ -311,6 +347,11 @@
         <div class="label">Samen gespaard</div>
         <div class="totaal" id="totaal">€ 0,00</div>
         <div class="van" id="stukjes">zit er in de pot</div>
+        <div class="groei" id="groei">
+          <div class="groeiKop">Zo groeide de pot</div>
+          <div class="groeiPlek" id="groeiPlek"></div>
+          <div class="groeiTip hidden" id="groeiTip"></div>
+        </div>
       </section>
       <section class="sectie invoerKaart">
         <div class="label">Doe mee!</div>
@@ -322,9 +363,21 @@
         </form>
         <div class="fout" id="fout"></div>
         <div class="laatste" id="laatste"></div>
+        <button class="lijstKnop alleenLeerkracht" id="lijstBtn" type="button">📋 Alle stortingen bekijken</button>
       </section>
     </div>
   </main>
+</div>
+
+<button class="presentStop" id="presentStop" type="button">✕ Presentatie stoppen</button>
+
+<div class="paneel hidden" id="lijstPaneel">
+  <div class="kaart lijstKaart">
+    <button class="sluit" id="sluitLijst" type="button" aria-label="Sluiten">✕</button>
+    <h2>Alle stortingen</h2>
+    <p class="uitleg" id="lijstSamen"></p>
+    <div class="stortLijst" id="stortLijst"></div>
+  </div>
 </div>
 
 <div class="paneel hidden" id="wachtPaneel">
@@ -2957,8 +3010,17 @@ const rustig = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)
 // ===================== gegevens =====================
 let doel = opslag.get('kp-doel', {naam:'Eindejaarsweek groep 8', bedrag:50000});
 let stortingen = opslag.get('kp-stortingen', []);     // lijst bedragen in centen
+// bij elke storting: wanneer (t, ms) en waarvandaan (b: 'bord' of 'ipad'); oudere stortingen hebben t = 0
+let stortInfo = opslag.get('kp-info', []);
 const totaalNu = () => stortingen.reduce((s,b) => s + b, 0);
-const bewaar = () => { opslag.set('kp-stortingen', stortingen); if(typeof planStand === 'function') planStand(); };
+const bewaar = () => {
+  while(stortInfo.length < stortingen.length) stortInfo.push({t:0, b:'?'});
+  if(stortInfo.length > stortingen.length) stortInfo.length = stortingen.length;
+  opslag.set('kp-stortingen', stortingen); opslag.set('kp-info', stortInfo);
+  if(typeof planStand === 'function') planStand();
+};
+// een storting toevoegen met tijd en bron
+function voegToe(bedrag, bron){ stortingen.push(bedrag); stortInfo.length = stortingen.length - 1; stortInfo.push({t: Date.now(), b: bron}); }
 
 // ===================== de glazen pot =====================
 const PW = 200, PH = 250;
@@ -3058,18 +3120,113 @@ function telOp(el, naar){
     el.textContent = fmt(Math.round(van + (naar-van)*e)); if(p < 1) el._raf = requestAnimationFrame(stap); };
   el._raf = requestAnimationFrame(stap);
 }
+// ===================== grafiek van de groei =====================
+// Eén lijn: het totaal in de pot door de tijd heen. Per dag als er op meer dagen is gestort, anders per storting.
+const GRAFIEK_KLEUR = '#19a85c';
+function groeiPunten(){
+  if(!stortingen.length) return [];
+  const dag = t => { const d = new Date(t); return d.getFullYear()*10000 + (d.getMonth()+1)*100 + d.getDate(); };
+  let som = 0, basis = 0; const per = [];
+  stortingen.forEach((b,i) => { const t = (stortInfo[i] || {}).t || 0; if(!t){ basis += b; return; } per.push({t, b}); });
+  som = basis;
+  const dagen = new Set(per.map(p => dag(p.t)));
+  const pt = [];
+  if(dagen.size >= 2){
+    per.forEach(p => { som += p.b; const k = dag(p.t); if(pt.length && pt[pt.length-1].k === k){ pt[pt.length-1].v = som; pt[pt.length-1].t = p.t; } else pt.push({k, t:p.t, v:som, dag:true}); });
+  } else {
+    if(basis || per.length) pt.push({t: per.length ? per[0].t - 1 : 0, v: basis, start:true});
+    per.forEach(p => { som += p.b; pt.push({t:p.t, v:som}); });
+  }
+  return pt;
+}
+function tekenGroei(){
+  const plek = document.getElementById('groeiPlek'); if(!plek || !plek.clientWidth) return;
+  const pt = groeiPunten();
+  if(pt.length < 2){ plek.innerHTML = '<div class="leegGrafiek">De grafiek verschijnt na een paar stortingen.</div>'; return; }
+  const W = plek.clientWidth, H = plek.clientHeight, L = 46, Rr = 8, T = 8, B = 20;
+  const max = Math.max(...pt.map(p => p.v), 1), stapY = (() => { const ruw = max/2, m = Math.pow(10, Math.floor(Math.log10(ruw))); return Math.ceil(ruw/m)*m; })();
+  const top = stapY*2, x = i => L + (W-L-Rr) * (i/(pt.length-1)), y = v => T + (H-T-B) * (1 - Math.max(0,v)/top);
+  const euro = c => '€ ' + Math.round(c/100).toLocaleString('nl-NL');
+  const label = p => p.start ? 'Begin' : p.dag ? new Date(p.t).toLocaleDateString('nl-NL', {day:'numeric', month:'short'}) : new Date(p.t).toLocaleTimeString('nl-NL', {hour:'2-digit', minute:'2-digit'});
+  const lijn = pt.map((p,i) => (i ? 'L' : 'M') + x(i).toFixed(1) + ' ' + y(p.v).toFixed(1)).join(' ');
+  let g = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Grafiek: zo groeide de pot, van ${euro(pt[0].v)} naar ${euro(pt[pt.length-1].v)}">`;
+  [0, stapY, top].forEach(v => { g += `<line x1="${L}" x2="${W-Rr}" y1="${y(v)}" y2="${y(v)}" stroke="#1f2a40" stroke-width="1"/><text x="${L-8}" y="${y(v)+4}" text-anchor="end" fill="#64748b" font-size="11" font-family="Inter,sans-serif">${euro(v)}</text>`; });
+  g += `<path d="${lijn} L${x(pt.length-1)} ${y(0)} L${x(0)} ${y(0)} Z" fill="${GRAFIEK_KLEUR}" fill-opacity=".12"/>`;
+  g += `<path d="${lijn}" fill="none" stroke="${GRAFIEK_KLEUR}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
+  g += `<text x="${L}" y="${H-4}" fill="#64748b" font-size="11" font-family="Inter,sans-serif">${label(pt[0])}</text><text x="${W-Rr}" y="${H-4}" text-anchor="end" fill="#64748b" font-size="11" font-family="Inter,sans-serif">${label(pt[pt.length-1])}</text>`;
+  g += `<circle cx="${x(pt.length-1)}" cy="${y(pt[pt.length-1].v)}" r="4.5" fill="${GRAFIEK_KLEUR}" stroke="#121a2b" stroke-width="2"/>`;
+  g += `<line id="gLijn" y1="${T}" y2="${H-B}" stroke="#94a3b8" stroke-width="1" opacity="0"/><circle id="gStip" r="5" fill="${GRAFIEK_KLEUR}" stroke="#121a2b" stroke-width="2" opacity="0"/>`;
+  g += `<rect x="${L}" y="0" width="${W-L-Rr}" height="${H}" fill="transparent" id="gVang"/></svg>`;
+  plek.innerHTML = g;
+  // zweven: verticale lijn + uitleg met datum en totaal
+  const tip = document.getElementById('groeiTip'), vang = plek.querySelector('#gVang'), gl = plek.querySelector('#gLijn'), gs = plek.querySelector('#gStip');
+  const toon = e => {
+    const r = plek.getBoundingClientRect(), mx = e.clientX - r.left;
+    const i = Math.max(0, Math.min(pt.length-1, Math.round((mx - L) / ((W-L-Rr)/(pt.length-1)))));
+    gl.setAttribute('x1', x(i)); gl.setAttribute('x2', x(i)); gl.setAttribute('opacity', .6);
+    gs.setAttribute('cx', x(i)); gs.setAttribute('cy', y(pt[i].v)); gs.setAttribute('opacity', 1);
+    tip.innerHTML = `${label(pt[i])}<b>${fmt(pt[i].v)}</b>`; tip.classList.remove('hidden');
+    tip.style.left = (plek.offsetLeft + x(i)) + 'px'; tip.style.top = (plek.offsetTop + y(pt[i].v) - 10) + 'px';
+  };
+  const weg = () => { tip.classList.add('hidden'); gl.setAttribute('opacity', 0); gs.setAttribute('opacity', 0); };
+  vang.addEventListener('pointermove', toon); vang.addEventListener('pointerdown', toon); vang.addEventListener('pointerleave', weg);
+}
+addEventListener('resize', () => setTimeout(tekenGroei, 60));
+
+// ===================== lijst van alle stortingen (leerkracht) =====================
+const lijstPaneel = document.getElementById('lijstPaneel');
+function tekenLijst(){
+  const lijst = document.getElementById('stortLijst');
+  const n = stortingen.length;
+  document.getElementById('lijstSamen').textContent = n ? `${n} ${n===1?'storting':'stortingen'} · samen ${fmt(totaalNu())}. Nieuwste bovenaan. Tik op ✕ om een storting weg te halen.` : 'Er zijn nog geen stortingen.';
+  lijst.innerHTML = '';
+  let vorigeDag = null;
+  for(let i = n-1; i >= 0; i--){
+    const b = stortingen[i], inf = stortInfo[i] || {t:0, b:'?'};
+    const dagTekst = inf.t ? new Date(inf.t).toLocaleDateString('nl-NL', {weekday:'long', day:'numeric', month:'long'}) : 'Eerder';
+    if(dagTekst !== vorigeDag){ lijst.insertAdjacentHTML('beforeend', `<div class="stortDag">${dagTekst}</div>`); vorigeDag = dagTekst; }
+    const tijd = inf.t ? new Date(inf.t).toLocaleTimeString('nl-NL', {hour:'2-digit', minute:'2-digit'}) : '';
+    const bron = b < 0 ? '↩︎ Eruit gehaald' : inf.b === 'ipad' ? '📱 iPad' : inf.b === 'bord' ? '🖥️ Digibord' : '';
+    const rij = document.createElement('div'); rij.className = 'stortRij';
+    rij.innerHTML = `<div class="wanneer"><span>${tijd}</span>${tijd && bron ? ' · ' : ''}${bron}</div><b class="${b < 0 ? 'min' : ''}">${b < 0 ? '− ' : '+ '}${fmt(Math.abs(b))}</b><button type="button" title="Weghalen">✕</button>`;
+    const knop = rij.querySelector('button');
+    knop.onclick = () => {
+      if(!isLeerkracht()) return;
+      if(!knop.classList.contains('zeker')){ knop.classList.add('zeker'); knop.textContent = 'Weghalen?'; setTimeout(() => { knop.classList.remove('zeker'); knop.textContent = '✕'; }, 3000); return; }
+      const nieuw = totaalNu() - b;
+      if(nieuw < 0){ toast('Dan zou de pot onder € 0 komen'); return; }
+      stortingen.splice(i, 1); stortInfo.splice(i, 1); bewaar(); teken(); tekenLijst();
+      toast(`${b < 0 ? '−' : '+'} ${fmt(Math.abs(b))} is uit de lijst gehaald`);
+    };
+    lijst.appendChild(rij);
+  }
+}
+document.getElementById('lijstBtn').onclick = () => { if(!isLeerkracht()) return; tekenLijst(); lijstPaneel.classList.remove('hidden'); };
+document.getElementById('sluitLijst').onclick = () => lijstPaneel.classList.add('hidden');
+lijstPaneel.addEventListener('click', e => { if(e.target === lijstPaneel) lijstPaneel.classList.add('hidden'); });
+
+// ===================== presentatiestand =====================
+function zetPresentatie(aan){
+  document.body.classList.toggle('presentatie', aan);
+  setTimeout(() => { potMaat(); tekenGroei(); }, 80);
+}
+document.getElementById('presentBtn').onclick = () => zetPresentatie(true);
+document.getElementById('presentStop').onclick = () => zetPresentatie(false);
+addEventListener('keydown', e => { if(e.key === 'Escape' && document.body.classList.contains('presentatie')) zetPresentatie(false); });
+
 function teken(){
   const t = totaalNu();
   telOp(totaalEl, t);
   document.getElementById('doelSub').textContent = doel.naam;
   tekenPot();
+  tekenGroei();
   const n = stash.children.length;
   document.getElementById('stukjes').textContent = n ? `zit er in de pot · ${n} ${n===1?'munt of briefje':'munten en briefjes'}` : 'De pot is nog leeg';
   const laatste = document.getElementById('laatste');
   if(stortingen.length){
     const l = stortingen[stortingen.length-1];
     laatste.innerHTML = `Laatst: ${l < 0 ? '−' : '+'} ${fmt(Math.abs(l))}` + (isLeerkracht() ? ` · <button type="button" id="terug">ongedaan maken</button>` : '');
-    if(isLeerkracht()) document.getElementById('terug').onclick = () => { stortingen.pop(); bewaar(); teken(); toast('De laatste wijziging is teruggedraaid'); };
+    if(isLeerkracht()) document.getElementById('terug').onclick = () => { stortingen.pop(); stortInfo.pop(); bewaar(); teken(); toast('De laatste wijziging is teruggedraaid'); };
   } else laatste.textContent = 'Typ een bedrag en druk op Erbij.';
 }
 
@@ -3154,7 +3311,7 @@ form.addEventListener('submit', e => {
   const voor = totaalNu();
   if(!erin && c > voor){ fout.textContent = `Er zit maar ${fmt(voor)} in de pot.`; return; }
   fout.textContent = '';
-  stortingen.push(erin ? c : -c); bewaar();
+  voegToe(erin ? c : -c, 'bord'); bewaar();
   bedragEl.value = ''; bedragEl.blur();
   geldAnimatie(c, erin, () => {
     teken(); plusTekst(c, !erin);
@@ -3243,7 +3400,7 @@ function ontvang(m){
     geluid.geld(100); toast(`📱 ${fmt(b)} wacht op goedkeuring`);
     return;
   }
-  stortingen.push(b); bewaar();
+  voegToe(b, 'ipad'); bewaar();
   geldAnimatie(b, true, () => { teken(); plusTekst(b); geluid.belVoor(b); }, document.getElementById('meedoenBtn'));
   toast(`📱 ${fmt(b)} erbij vanaf een iPad`);
 }
@@ -3273,7 +3430,7 @@ function keurGoed(id){
   if(!isLeerkracht()) return;
   const w = wachtrij.find(x => x.id === id); if(!w) return;
   wachtrij = wachtrij.filter(x => x.id !== id); bewaarWacht();
-  stortingen.push(w.b); bewaar();
+  voegToe(w.b, 'ipad'); bewaar();
   geldAnimatie(w.b, true, () => { teken(); plusTekst(w.b); geluid.belVoor(w.b); }, document.getElementById('wachtBtn').classList.contains('hidden') ? document.getElementById('meedoenBtn') : document.getElementById('wachtBtn'));
 }
 function keurAf(id){
@@ -3287,7 +3444,7 @@ document.getElementById('allesGoed').onclick = () => {
   if(!isLeerkracht() || !wachtrij.length) return;
   const alle = wachtrij.slice(); wachtrij = []; bewaarWacht(); wachtPaneel.classList.add('hidden');
   const som = alle.reduce((s,w) => s + w.b, 0);
-  alle.forEach(w => stortingen.push(w.b)); bewaar();
+  alle.forEach(w => voegToe(w.b, 'ipad')); bewaar();
   geldAnimatie(som, true, () => { teken(); plusTekst(som); geluid.belVoor(som); }, document.getElementById('meedoenBtn'));
 };
 document.getElementById('allesAf').onclick = () => {
@@ -3364,6 +3521,15 @@ function startLeerling(){
   document.querySelectorAll('.lTab').forEach(t => t.onclick = () => kiesTab(t.dataset.l));
   document.getElementById('lNaarPot').onclick = () => { laatstOpgehaald = 0; kiesTab('bekijk'); };
   vernieuw.onclick = () => { if(Date.now() - laatstOpgehaald > 5000) haalStand(); };
+  // vanzelf verversen zolang "Bekijk de pot" open en in beeld is: elke 2 minuten (met wat speling,
+  // zodat niet alle iPads van de klas tegelijk vragen en de gratis berichtendienst niet blokkeert)
+  const wachtTijd = 120000 + Math.random()*20000;
+  setInterval(() => {
+    if(!bekijk.classList.contains('hidden') && document.visibilityState === 'visible' && !vernieuw.disabled && Date.now() - laatstOpgehaald > wachtTijd) haalStand();
+  }, 10000);
+  document.addEventListener('visibilitychange', () => {
+    if(document.visibilityState === 'visible' && !bekijk.classList.contains('hidden') && Date.now() - laatstOpgehaald > 30000) haalStand();
+  });
   async function haalStand(){
     const code = schoneCode(codeEl.value);
     if(code.length < 4){ info.textContent = 'Vul eerst de klascode in bij "Geld erbij".'; return; }
@@ -3383,7 +3549,7 @@ function startLeerling(){
       lTotaal._v = lTotaal._v ?? 0; telOp(lTotaal, stand.t);
       potMaat(); tekenPot();
       const tijd = new Date(stand.at || Date.now());
-      info.textContent = 'Bijgewerkt om ' + tijd.toLocaleTimeString('nl-NL', {hour:'2-digit', minute:'2-digit'});
+      info.textContent = 'Bijgewerkt om ' + tijd.toLocaleTimeString('nl-NL', {hour:'2-digit', minute:'2-digit'}) + ' · ververst vanzelf';
     }catch(err){
       info.textContent = 'Ophalen lukte niet. Heb je internet? Probeer het zo nog eens.';
     }finally{
@@ -3413,7 +3579,7 @@ function zetLeerkracht(aan){
   knop.title = aan ? 'Vergrendelen (leerlingmodus)' : 'Leerkracht: ontgrendelen';
   clearTimeout(slotTimer);
   if(aan) slotTimer = setTimeout(() => { zetLeerkracht(false); toast('Het slot is weer dicht'); }, SLOT_MINUTEN*60000);
-  if(!aan){ paneel.classList.add('hidden'); }
+  if(!aan){ paneel.classList.add('hidden'); lijstPaneel.classList.add('hidden'); }
   teken(); if(typeof tekenWacht === 'function') tekenWacht();
 }
 // elke tik van de leerkracht houdt het slot langer open
@@ -3472,7 +3638,7 @@ document.getElementById('instForm').addEventListener('submit', e => {
 nulBtn.onclick = () => {
   if(!nulBtn.dataset.zeker){ nulBtn.dataset.zeker = 1; nulBtn.textContent = 'Zeker weten? Tik nog eens';
     setTimeout(() => { delete nulBtn.dataset.zeker; nulBtn.textContent = 'Pot op nul zetten'; }, 3000); return; }
-  stortingen = []; bewaar(); delete nulBtn.dataset.zeker; nulBtn.textContent = 'Pot op nul zetten';
+  stortingen = []; stortInfo = []; bewaar(); delete nulBtn.dataset.zeker; nulBtn.textContent = 'Pot op nul zetten';
   paneel.classList.add('hidden'); teken(); toast('De pot staat weer op nul');
 };
 
@@ -3486,7 +3652,7 @@ function tekenBackupInfo(){
 }
 document.getElementById('backupMaak').onclick = () => {
   if(!isLeerkracht()) return;
-  const data = {app:'geldpot', versie:1, gemaakt:new Date().toISOString(), totaal: totaalNu(), stortingen, naam: doel.naam, klascode: meedoen.code, goedkeuren, wachtrij};
+  const data = {app:'geldpot', versie:1, gemaakt:new Date().toISOString(), totaal: totaalNu(), stortingen, info: stortInfo, naam: doel.naam, klascode: meedoen.code, goedkeuren, wachtrij};
   const blob = new Blob([JSON.stringify(data, null, 1)], {type:'application/json'});
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
   a.download = 'geldpot-backup-' + new Date().toISOString().slice(0,10) + '.json';
@@ -3509,7 +3675,9 @@ document.getElementById('backupBestand').onchange = async e => {
 document.getElementById('backupNee').onclick = () => { teruggezet = null; document.getElementById('backupVraag').classList.add('hidden'); };
 document.getElementById('backupJa').onclick = () => {
   if(!teruggezet || !isLeerkracht()) return;
-  stortingen = teruggezet.stortingen.slice(); bewaar();
+  stortingen = teruggezet.stortingen.slice();
+  stortInfo = Array.isArray(teruggezet.info) && teruggezet.info.length === stortingen.length ? teruggezet.info.map(x => ({t: +x.t || 0, b: x.b === 'ipad' ? 'ipad' : x.b === 'bord' ? 'bord' : '?'})) : [];
+  bewaar();
   if(teruggezet.naam){ doel = {...doel, naam: teruggezet.naam}; opslag.set('kp-doel', doel); }
   if(Array.isArray(teruggezet.wachtrij)){ wachtrij = teruggezet.wachtrij.filter(w => w && Number.isInteger(w.b)); bewaarWacht(); }
   teruggezet = null; document.getElementById('backupVraag').classList.add('hidden'); paneel.classList.add('hidden');
